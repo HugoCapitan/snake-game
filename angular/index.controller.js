@@ -15,9 +15,13 @@
 		vm.canvas = undefined;
 		vm.ctx = undefined;
 		vm.snake = []; // <- each value in the array will be a length of the snake
+		vm.food = {posx: 30, posy: 30};
+		vm.grow = 0;
+		vm.moved = 0;
 
 		vm.drawSnake = drawSnake;
 		vm.defineSnake = defineSnake;
+		vm.snakeFullLength = snakeFullLength;
 
 
 		activate();
@@ -36,9 +40,9 @@
 				} else if (segment.direction === 'horizontal' && segment.pointing === 'left') { 
 					vm.ctx.lineTo(segment.posx + segment.length, segment.posy);
 				} else if (segment.direction === 'vertical' && segment.pointing === 'up') {
-					vm.ctx.lineTo(segment.posx, segment.posy - segment.length);
-				} else if (segment.direction === 'vertical' && segment.pointing ==='down') {
 					vm.ctx.lineTo(segment.posx, segment.posy + segment.length);
+				} else if (segment.direction === 'vertical' && segment.pointing ==='down') {
+					vm.ctx.lineTo(segment.posx, segment.posy - segment.length);
 				}
 				vm.ctx.closePath();
 				vm.ctx.stroke();
@@ -48,30 +52,81 @@
 		function defineSnake () {
 			vm.snake.forEach(function (segment, index){
 				if (index === 0) {
-					segment.length++;
+					segment.length += 2;
 					if (segment.direction === 'horizontal' && segment.pointing === 'right') {
-						segment.posx++;
+						segment.posx += 2;
 					} else if (segment.direction === 'horizontal' && segment.pointing === 'left'){
-						segment.posx--;
+						segment.posx -= 2;
 					} else if (segment.direction === 'vertical' && segment.pointing === 'up') {
-						segment.posy--;
+						segment.posy -= 2;
 					} else if (segment.direction === 'vertical' && segment.pointing === 'down') {
-						segment.posy++;
+						segment.posy += 2;
 					}
 				}
 				if (vm.snake.length - 1 === index) {
-					segment.length--;
-					if (segment.length === 0) {
+					segment.length -= 2;
+					if (segment.length <= 0) {
 						vm.snake.splice(index, 1);
 					}
 				}
 			});
 
+			if (vm.grow >= 2) {
+				if (vm.moved === vm.snakeFullLength()) {
+					vm.snake[0].length += 2;
+					vm.moved = 0;
+				} else {
+					vm.moved += 2;
+				}
+			}
+
+			if (segment.posx == food.posx, segment.posy == food.posy) {
+				vm.grow = true;
+			}
+
 			vm.drawSnake();		
 		}
 
 		function keyDown (key) {
-			console.log(key);
+			key.preventDefault();
+			var newSegment = {length: 2}
+			if (key.code === 'ArrowRight' && vm.snake[0].direction === 'vertical') {
+				newSegment.direction = 'horizontal';
+				newSegment.pointing = 'right';
+				newSegment.posx = vm.snake[0].posx + 2;
+				newSegment.posy = vm.snake[0].posy;
+				vm.snake[0].length -= 2;
+				vm.snake.unshift(newSegment);
+			} else if (key.code === 'ArrowLeft' && vm.snake[0].direction === 'vertical') {
+				newSegment.direction = 'horizontal';
+				newSegment.pointing = 'left';
+				newSegment.posx = vm.snake[0].posx - 2;
+				newSegment.posy = vm.snake[0].posy;
+				vm.snake[0].length -= 2;
+				vm.snake.unshift(newSegment);
+			} else if (key.code === 'ArrowUp' && vm.snake[0].direction === 'horizontal') {
+				newSegment.direction = 'vertical';
+				newSegment.pointing = 'up';
+				newSegment.posx = vm.snake[0].posx;
+				newSegment.posy = vm.snake[0].posy - 2;
+				vm.snake[0].length -= 2;
+				vm.snake.unshift(newSegment);
+			} else if (key.code === 'ArrowDown' && vm.snake[0].direction === 'horizontal') {
+				newSegment.direction = 'vertical';
+				newSegment.pointing = 'down';
+				newSegment.posx = vm.snake[0].posx;
+				newSegment.posy = vm.snake[0].posy + 2;
+				vm.snake[0].length -= 2;
+				vm.snake.unshift(newSegment);
+			}
+		}
+
+		function snakeFullLength () {
+			var fullLength = 0;
+			vm.snake.forEach(function (segment, index) {
+				fullLength += segment.length;
+			});
+			return fullLength;
 		}
 
 
@@ -96,7 +151,7 @@
 
 			vm.snake = [{length: 50, direction: 'horizontal', pointing: 'right', posx: parseInt(vm.width/2), posy: parseInt(vm.height/2)}];
 
-			return setInterval(defineSnake, 1);
+			return setInterval(defineSnake, 10);
 
 		}
 	}
